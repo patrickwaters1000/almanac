@@ -196,13 +196,14 @@
      :day-length-error (mean-absolute-value (map :day-length-error errors))}))
 
 (comment
-  (compute-errors :coarse-sunrise-eq true
-                  :circular-orbit false)
-  (for [coarse-sunrise-eq [false true]
-        circular-orbit [false true]]
-    (assoc (compute-mae :coarse-sunrise-eq coarse-sunrise-eq
-                        :circular-orbit circular-orbit)
-      :coarse-sunrise-eq coarse-sunrise-eq
-      :circular-orbit circular-orbit))
+  (def errors (compute-errors :coarse-sunrise-eq true
+                              :circular-orbit false))
+  (def stats
+    (vec (for [coarse-sunrise-eq [false true]
+               circular-orbit [false true]]
+           (assoc (compute-mae :coarse-sunrise-eq coarse-sunrise-eq
+                               :circular-orbit circular-orbit)
+             :coarse-sunrise-eq coarse-sunrise-eq
+             :circular-orbit circular-orbit))))
   ;;
   )

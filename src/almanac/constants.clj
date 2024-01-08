@@ -14,3 +14,4 @@
 (def EARTH_ORBIT_ECCENTRICITY 0.01671)
 
 (def SQRT_HALF (Math/sqrt 0.5))
+(def HALF_PI (/ Math/PI 2))

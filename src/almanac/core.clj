@@ -28,8 +28,6 @@
   "Calculates the angle in the xy-plane of the vector from the Earth to the Sun."
   [dt & {:keys [circular-orbit]}]
   (let [t (u/date-to-years dt)
-        _ (println (format "Date: %s" dt))
-        _ (println (format "Date in years: %f" t))
         base-sun-earth-angle (* 2 Math/PI t)
         sun-earth-angle (if circular-orbit
                           base-sun-earth-angle
@@ -37,8 +35,6 @@
                             c/EARTH_ORBIT_ECCENTRICITY
                             c/EARTH_ORBIT_PERIHELION_RADIANS
                             base-sun-earth-angle))]
-    (println "Base sun earth angle: " base-sun-earth-angle)
-    (println "Corrected sun earth angle: " sun-earth-angle)
     (+ Math/PI sun-earth-angle)))
 
 (defn- earth-sun-vector
@@ -143,7 +139,6 @@
                 coarse-sunrise-eq]} conf
         θ (compute-θ lattitude)
         γ0 (earth-sun-angle date :circular-orbit circular-orbit)]
-    (println (format "Corrected earth sun angle: %f" γ0))
     (->> (sunrise-equation/solve-for-ϕ θ γ0 :coarse coarse-sunrise-eq)
          (map (partial compute-time-of-day-seconds longitude time-zone date))
          (sort)

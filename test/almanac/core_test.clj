@@ -118,48 +118,91 @@
   (is (= "12:00:00" (#'core/compute-time-of-day-seconds 0.0 0 Math/PI)))
   (is (= "10:00:00" (#'core/compute-time-of-day-seconds 90.0 -8 Math/PI))))
 
-(deftest computing-sunrise-and-sunset
-  (#'core/compute-sunrise-and-sunset 45.515 -122.678 -8 (t/date-time 2024 1 1))
-  (#'core/compute-sunrise-and-sunset 45.515 -122.678 -8 (t/date-time 2024 2 1))
-  (#'core/compute-sunrise-and-sunset 45.515 -122.678 -8 (t/date-time 2024 3 1))
-  (#'core/compute-sunrise-and-sunset 45.515 -122.678 -8 (t/date-time 2024 4 1))
-  (#'core/compute-sunrise-and-sunset 45.515 -122.678 -8 (t/date-time 2024 5 1))
-  (#'core/compute-sunrise-and-sunset 45.515 -122.678 -8 (t/date-time 2024 6 1))
-  (#'core/compute-sunrise-and-sunset 45.515 -122.678 -8 (t/date-time 2024 7 1))
-  (#'core/compute-sunrise-and-sunset 45.515 -122.678 -8 (t/date-time 2024 8 1))
-  (#'core/compute-sunrise-and-sunset 45.515 -122.678 -8 (t/date-time 2024 9 1))
-  (#'core/compute-sunrise-and-sunset 45.515 -122.678 -8 (t/date-time 2024 10 1))
-  (#'core/compute-sunrise-and-sunset 45.515 -122.678 -8 (t/date-time 2024 11 1))
-  (#'core/compute-sunrise-and-sunset 45.515 -122.678 -8 (t/date-time 2024 12 1)))
-
+(def portland-lattitude 45.515)
+(def portland-longitude -122.678)
 (def portland-sunrise-and-sunset-data
-  [{:longitude 45.515 :lattitude -122.678 :date (t/date-time 2024 1 1) :sunrise "7:50" :sunset "16:37"}
-   {:longitude 45.515 :lattitude -122.678 :date (t/date-time 2024 2 1) :sunrise "7:32" :sunset "17:16"}
-   {:longitude 45.515 :lattitude -122.678 :date (t/date-time 2024 3 1) :sunrise "6:47" :sunset "17:58"}
-   {:longitude 45.515 :lattitude -122.678 :date (t/date-time 2024 4 1) :sunrise "6:49" :sunset "19:39"}
-   {:longitude 45.515 :lattitude -122.678 :date (t/date-time 2024 5 1) :sunrise "5:57" :sunset "20:18"}
-   {:longitude 45.515 :lattitude -122.678 :date (t/date-time 2024 6 1) :sunrise "5:25" :sunset "20:52"}
-   {:longitude 45.515 :lattitude -122.678 :date (t/date-time 2024 7 1) :sunrise "5:26" :sunset "21:02"}
-   {:longitude 45.515 :lattitude -122.678 :date (t/date-time 2024 8 1) :sunrise "5:55" :sunset "20:37"}
-   {:longitude 45.515 :lattitude -122.678 :date (t/date-time 2024 9 1) :sunrise "6:32" :sunset "19:47"}
-   {:longitude 45.515 :lattitude -122.678 :date (t/date-time 2024 10 1) :sunrise "7:09" :sunset "18:49"}
-   {:longitude 45.515 :lattitude -122.678 :date (t/date-time 2024 11 1) :sunrise "7:51" :sunset "17:56"}
-   {:longitude 45.515 :lattitude -122.678 :date (t/date-time 2024 12 1) :sunrise "7:31" :sunset "16:28"}])
+  [[(t/date-time 2024 1 1) -8 "7:50" "16:37"]
+   [(t/date-time 2024 2 1) -8 "7:32" "17:16"]
+   [(t/date-time 2024 3 1) -8 "6:47" "17:58"]
+   [(t/date-time 2024 4 1) -7 "6:49" "19:39"]
+   [(t/date-time 2024 5 1) -7 "5:57" "20:18"]
+   [(t/date-time 2024 6 1) -7 "5:25" "20:52"]
+   [(t/date-time 2024 7 1) -7 "5:26" "21:02"]
+   [(t/date-time 2024 8 1) -7 "5:55" "20:37"]
+   [(t/date-time 2024 9 1) -7 "6:32" "19:47"]
+   [(t/date-time 2024 10 1) -7 "7:09" "18:49"]
+   [(t/date-time 2024 11 1) -7 "7:51" "17:56"]
+   [(t/date-time 2024 12 1) -8 "7:31" "16:28"]])
+
+(defn hms-str->minutes
+  "Parses a string of either form h:mm:ss, hh:mm:ss, h:mm or hh:mm as a float
+  valued number of minutes since midnight."
+  [hms-str]
+  (let [regex #"(\d{1,2}):(\d{2,2})(:(\d{2,2}))?"
+        [_ h-str m-str _ s-str] (re-matches regex hms-str)
+        h (Integer/parseInt h-str)
+        m (Integer/parseInt m-str)
+        s (if s-str
+            (Integer/parseInt s-str)
+            0)]
+    (+ (* 60.0 h) m (/ s 60.0))))
+
+(defn compute-errors [& {:keys [coarse-sunrise-eq circular-orbit]}]
+  (for [[date
+         time-zone
+         sunrise-want-str
+         sunset-want-str] portland-sunrise-and-sunset-data
+        :let [config (core/map->Config
+                       {:lattitude portland-lattitude
+                        :longitude portland-longitude
+                        :time-zone time-zone
+                        :date date
+                        :coarse-sunrise-eq coarse-sunrise-eq
+                        :circular-orbit circular-orbit})
+              [sunrise-got-str
+               sunset-got-str] (#'core/compute-sunrise-and-sunset config)
+              [sunrise-got
+               sunset-got] (->> [sunrise-got-str
+                                 sunset-got-str]
+                                (map hms-str->minutes))
+              [sunrise-want
+               sunset-want] (map hms-str->minutes [sunrise-want-str
+                                                   sunset-want-str])
+              sunrise-error (- sunrise-got sunrise-want)
+              sunset-error (- sunset-got sunset-want)
+              day-length-error (- sunset-error sunrise-error)]]
+    {:date (subs (str date) 0 10)
+     :sunrise-got sunrise-got-str
+     :sunrise-want sunrise-want-str
+     :sunset-got sunset-got-str
+     :sunset-want sunset-want-str
+     :sunrise-error sunrise-error
+     :sunset-error sunset-error
+     :day-length-error day-length-error}))
+
+(defn mean-absolute-value [xs]
+  (let [n (count xs)
+        abs-err (->> xs
+                     (map #(Math/abs %))
+                     (reduce + 0.0))]
+    (/ abs-err n)))
+
+(defn compute-mae [& {:keys [coarse-sunrise-eq
+                             circular-orbit]}]
+  (let [errors (compute-errors :coarse-sunrise-eq coarse-sunrise-eq
+                               :circular-orbit circular-orbit)]
+    {:sunrise-error (mean-absolute-value (map :sunrise-error errors))
+     :sunset-error (mean-absolute-value (map :sunset-error errors))
+     :day-length-error (mean-absolute-value (map :day-length-error errors))}))
 
 (comment
-  (require '[almanac.math :as math])
-  (let [lattitude 45.5
-        longitude -122.7
-        time-zone-hours -8
-        dt (t/date-time 2024 1 2)
-        γ (#'core/earth-sun-angle dt)
-        θ (#'core/compute-θ lattitude)
-        α core/EARTH_AXIAL_TILT_RADIANS
-        a (* (Math/cos γ) (Math/cos α) (Math/sin θ))
-        b (* (Math/sin γ) (Math/sin θ))
-        c (* (Math/cos γ) (Math/sin α) (Math/cos θ))]
-    (->> (math/solve-sine-cosine-equation a b c)
-         ;;(map (partial compute-time-of-day-seconds longitude time-zone-hours))
-         ;;(sort)
-         ;;(map format-time)
-         )))
+  (compute-errors :coarse-sunrise-eq true
+                  :circular-orbit false)
+  (for [coarse-sunrise-eq [false true]
+        circular-orbit [false true]]
+    (assoc (compute-mae :coarse-sunrise-eq coarse-sunrise-eq
+                        :circular-orbit circular-orbit)
+      :coarse-sunrise-eq coarse-sunrise-eq
+      :circular-orbit circular-orbit))
+  ;;
+  )

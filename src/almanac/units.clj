@@ -5,10 +5,10 @@
     [clj-time.core :as t]))
 
 (defn date-to-seconds
-  "Returns the date as a number of seconds since January 1, 2024."
+  "Returns the date as a number of seconds since winter solstice 2023."
   [dt]
   (- (tc/to-epoch dt)
-     (tc/to-epoch (t/date-time 2024))))
+     (tc/to-epoch (t/date-time 2023 12 21))))
 
 (defn date-to-days
   "Returns the date as a fractional number of days."

@@ -1,7 +1,9 @@
 (ns almanac.math-test
   (:require
     [almanac.math :as math]
-    [almanac.testlib :refer [approximately-equal-vectors?]]
+    [almanac.testlib :refer [approx?
+                             approximately-equal-vectors?]]
+    [almanac.units :as u]
     [clojure.test :refer [is deftest are]]))
 
 (deftest computing-dot-products
@@ -13,18 +15,18 @@
                                      [1 3]))))
 
 (deftest computing-angles
-  (is (= 0.0 (math/radians-to-degrees (math/angle 1.0 0.0))))
-  (is (= 45.0 (math/radians-to-degrees (math/angle 1.0 1.0))))
+  (is (= 0.0 (u/radians-to-degrees (math/angle 1.0 0.0))))
+  (is (= 45.0 (u/radians-to-degrees (math/angle 1.0 1.0))))
   (is (= (float 60.0)
-         (float (math/radians-to-degrees
+         (float (u/radians-to-degrees
                   (math/angle 0.5
                               (/ (Math/sqrt 3.0) 2))))))
-  (is (= 90.0 (math/radians-to-degrees (math/angle 0.0 1.0))))
-  (is (= -90.0 (math/radians-to-degrees (math/angle 0.0 -1.0))))
-  (is (= -45.0 (math/radians-to-degrees (math/angle 1.0 -1.0))))
-  (is (= 180.0 (math/radians-to-degrees (math/angle -1.0 0.0))))
-  (is (= 135.0 (math/radians-to-degrees (math/angle -1.0 1.0))))
-  (is (= 225.0 (math/radians-to-degrees (math/angle -1.0 -1.0)))))
+  (is (= 90.0 (u/radians-to-degrees (math/angle 0.0 1.0))))
+  (is (= -90.0 (u/radians-to-degrees (math/angle 0.0 -1.0))))
+  (is (= -45.0 (u/radians-to-degrees (math/angle 1.0 -1.0))))
+  (is (= 180.0 (u/radians-to-degrees (math/angle -1.0 0.0))))
+  (is (= 135.0 (u/radians-to-degrees (math/angle -1.0 1.0))))
+  (is (= 225.0 (u/radians-to-degrees (math/angle -1.0 -1.0)))))
 
 (deftest solving-sine-cosine-equations
   (are [a b c num-solutions]
@@ -38,3 +40,17 @@
     4.0 5.0 6.0 2
     0.0 1.0 -0.5 2
     1.0 1.0 (- (Math/sqrt 2.0)) 1))
+
+(deftest solving-quadratics
+  (is (= [(- 1 (Math/sqrt 2))
+          (+ 1 (Math/sqrt 2))]
+         (math/solve-quadratic 1.0 -2.0 -1.0))))
+
+(deftest solving-increasing-functions
+  (is (approx? 1.0E-6
+               (Math/sqrt 3.0)
+               (math/solve-increasing-function
+                 #(- (Math/pow % 2) 3.0)
+                 1.0E-8
+                 0.0
+                 2.0))))

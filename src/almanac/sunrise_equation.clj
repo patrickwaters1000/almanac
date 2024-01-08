@@ -37,7 +37,7 @@
     (+ (* (Math/sin α) (Math/cos θ) (Math/cos γ))
        (* c/SUN_HALF_WIDTH_OFFSET_RADIANS))))
 
-(defn solve-for-ϕ-coarse [θ γ]
+(defn- solve-for-ϕ-coarse [θ γ]
   (math/solve-sine-cosine-equation (a θ γ)
                                    (b θ γ)
                                    (c θ γ)))
@@ -48,9 +48,12 @@
        (* (b θ γ) (Math/sin ϕ))
        (c θ γ))))
 
-(defn solve-for-ϕ [θ γ0]
+(defn solve-for-ϕ [θ γ0 & {:keys [coarse]}]
   (let [[ϕ0-sunrise
          ϕ0-sunset] (solve-for-ϕ-coarse θ γ0)
         f (partial error θ γ0)]
-    (for [ϕ0 [ϕ0-sunrise ϕ0-sunset]]
-      (math/newton f 1.0E-8 20 ϕ0))))
+    (if coarse
+      [ϕ0-sunrise
+       ϕ0-sunset]
+      (for [ϕ0 [ϕ0-sunrise ϕ0-sunset]]
+        (math/newton f 1.0E-8 20 ϕ0)))))

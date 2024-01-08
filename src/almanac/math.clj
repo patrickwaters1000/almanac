@@ -53,3 +53,32 @@
                       tolerance)
                 delta (- (/ (f x) f'))]
             (recur f tolerance (dec max-iterations) (+ x delta)))))
+
+(defn solve-quadratic
+  [a b c]
+  (let [discriminant (- (Math/pow b 2) (* 4 a c))
+        center (/ (- b) (* 2 a))
+        radius (when (pos? discriminant)
+                 (/ (Math/sqrt discriminant)
+                    (* 2 a)))]
+    (cond
+      (neg? discriminant) []
+      (zero? discriminant) [center]
+      :else [(- center radius) (+ center radius)])))
+
+(defn solve-increasing-function
+  "Finds the solution to f(x) = 0, where x is an increasing continuous function."
+  [f tolerance a b]
+  (let [c (/ (+ a b) 2.0)
+        y-a (f a)
+        y-b (f b)
+        y-c (f c)]
+    (cond
+      (or (pos? y-a)
+          (neg? y-b)) (throw (Exception.
+                               (format "There is no solution in [%f, %f]" a b)))
+      (>= tolerance (Math/abs y-c)) c
+      :else (let [[a b] (if (pos? y-c)
+                          [a c]
+                          [c b])]
+              (recur f tolerance a b)))))

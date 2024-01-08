@@ -25,8 +25,10 @@
                (* 1.25 Math/PI)
                (ellipse/elliptic-sector-area 1.0 (* 2.5 Math/PI)))))
 
-;; TODO Figure out why this fails for t=0.
-(for [t (range 0.01 (* 2 Math/PI) 0.1)]
-  {:circular-angle t
-   :elliptic-angle (ellipse/orbital-angle
-                     0.02 0.0 t)})
+(comment
+  (for [t (range 0.0 (* 2 Math/PI) 0.1)]
+    {:circular-angle t
+     :elliptic-angle (ellipse/orbital-angle
+                       0.02 0.0 t)})
+  ;;
+  )

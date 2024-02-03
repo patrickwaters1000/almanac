@@ -96,11 +96,11 @@
                (ellipse-big-sector-area
                  a (- Math/PI theta))))))
 
-(defn orbital-angle
+(defn adjust-orbital-angle
   "Adjusts an orbital angle computed with a circular orbit approximation to
-  account for an elliptical orbit with eccentricity `e` and perihelion alpha
+  account for an elliptical orbit with eccentricity = e and perihelion = alpha
   (i.e., nearest point to the sun at angle alpha)."
-  [e alpha coarse-angle]
+  [coarse-angle e alpha]
   (let [a (Math/pow (- 1.0 (Math/pow e 2))
                     -0.5)
         total-area (* a Math/PI)
